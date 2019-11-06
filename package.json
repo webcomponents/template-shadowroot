@@ -1,0 +1,30 @@
+{
+  "name": "template-attach-shadow",
+  "version": "0.0.0",
+  "description": "",
+  "main": "template-attach-shadow.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "polymer test --npm"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webcomponents/template-attach-shadow.git"
+  },
+  "keywords": [],
+  "author": "The Polymer Authors",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/webcomponents/template-attach-shadow/issues"
+  },
+  "homepage": "https://github.com/webcomponents/template-attach-shadow#readme",
+  "devDependencies": {
+    "@types/chai": "^4.2.4",
+    "@types/mocha": "^5.2.7",
+    "chai": "^4.2.0",
+    "mocha": "^6.2.2",
+    "polymer-cli": "^1.9.11",
+    "typescript": "^3.7.2",
+    "wct-mocha": "^1.0.1"
+  }
+}
