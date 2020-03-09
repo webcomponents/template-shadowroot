@@ -28,33 +28,34 @@ class TestLogElement extends HTMLElement {
 customElements.define('test-log', TestLogElement);
 
 suite('hydrateShadowRoots', () => {
+  teardown(() => {
+    elementLog.length = 0;
+  });
 
   test('hydrates a template', () => {
     const root = document.createElement('div');
     root.innerHTML = `
       <test-log label="A">
-        <template attach-shadow="open">
+        <template shadowroot="open">
           <h1>Hello</h1>
           <test-log label="B"></test-log>
         </template>
       </div>
     `;
-    // Only needed if we don't explicitly call customElements.upgrade()
-    // document.body.append(root);
+    document.body.append(root);
     assert.deepEqual(elementLog, ['A']);
     hydrateShadowRoots(root);
     assert.deepEqual(elementLog, ['A', 'B']);
-    elementLog.length = 0;
   });
 
   test('hydrates nested templates in postorder', () => {
     const root = document.createElement('div');
     root.innerHTML = `
       <test-log label="A">
-        <template attach-shadow="open">
+        <template shadowroot="open">
           <h1>Hello</h1>
           <test-log label="B">
-            <template attach-shadow="open">
+            <template shadowroot="open">
               <h1>World!</h1>
               <test-log label="C"></test-log>
             </template>
@@ -64,17 +65,16 @@ suite('hydrateShadowRoots', () => {
       </div>
     `;
     // Only needed if we don't explicitly call customElements.upgrade()
-    // document.body.append(root);
+    document.body.append(root);
     assert.deepEqual(elementLog, ['A']);
     hydrateShadowRoots(root);
     // If the templates hydrated in document order, D would upgrade before C
     assert.deepEqual(elementLog, ['A', 'B', 'C', 'D']);
-    elementLog.length = 0;
   });
 
   // TODO(justinfagnani): more tests...
-  //  * Multiple <template attach-shadow> on one host should error
-  //  * <template> w/o attach-shadow should not be traversed into
-  //  * attach-shadow="closed"
-  //  * attach-shadow= something invalid
+  //  * Multiple <template shadowRoot> on one host should error
+  //  * <template> w/o shadowRoot should not be traversed into
+  //  * shadowroot="closed"
+  //  * shadowroot= something invalid
 });

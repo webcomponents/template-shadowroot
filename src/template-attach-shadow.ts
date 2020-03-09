@@ -12,8 +12,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-/* 
- * Traverses the DOM to find all <template> elements with an `attach-shadow`
+/*
+ * Traverses the DOM to find all <template> elements with a `shadowroot`
  * attribute and move their content into a ShadowRoot on their parent element.
  *
  * This processing is done depth-first so that when top-level <template>
@@ -21,14 +21,14 @@
  * final correct structure of elements and shadow roots.
  */
 export const hydrateShadowRoots = (root: ParentNode) => {
-  // Stack of nested templates that we're currently processing. Use to remember
-  // how to get from a <template>.content DocumentFragment back to its owner
-  // <template>
+  // Stack of nested templates that we're currently processing. Use to
+  // remember how to get from a <template>.content DocumentFragment back to
+  // its owner <template>
   const templateStack: Array<HTMLTemplateElement> = [];
 
-  let currentNode: Element | DocumentFragment | null = root.firstElementChild;
+  let currentNode: Element|DocumentFragment|null = root.firstElementChild;
 
-  // The outer loop traverses down, looking for <template attach-shadow>
+  // The outer loop traverses down, looking for <template shadowroot>
   // elements. The inner loop traverses back up, hydrating them in a postorder
   // traversal.
   while (currentNode !== root && currentNode !== null) {
@@ -36,50 +36,52 @@ export const hydrateShadowRoots = (root: ParentNode) => {
       templateStack.push(currentNode);
       currentNode = currentNode.content;
     } else if (currentNode.firstElementChild !== null) {
-      // Traverse down all the way
+      // Traverse down
       currentNode = currentNode.firstElementChild;
-    } else if (isElement(currentNode) && currentNode.nextElementSibling !== null) {
-      // If the element is empty, traverse next sibling
+    } else if (
+        isElement(currentNode) && currentNode.nextElementSibling !== null) {
+      // Element is empty, but has a next sibling. Traverse that.
       currentNode = currentNode.nextElementSibling;
     } else {
-      // If the element is empty and the last child, traverse to the successor
+      // Element is empty and the last child. Traverse to next aunt/grandaunt.
 
       // Store templates we hydrate for one loop so that we can remove them
       // *after* traversing to their successor.
-      let template: HTMLTemplateElement | undefined;
+      let template: HTMLTemplateElement|undefined;
 
       while (currentNode !== root && currentNode !== null) {
         if (currentNode.parentElement === null) {
           // We must be at a <template>'s content fragment.
           template = templateStack.pop()!;
-          const shadowMode = template.getAttribute('attach-shadow');
-          if (shadowMode !== null) {
-            const host = template.parentElement!;
-            const shadow = host.attachShadow({mode: shadowMode as ShadowRootMode});
-            // TODO(justinfagnani): Simply appending the template content
-            // doesn't upgrade the nodes until the top-most tempalte is hydrated
-            // and only if it's connected. We don't want to upgrade elements
-            // early though (since parent's might not be awake to listen for
-            // events, etc.) so we don't want to use document.importNode() here.
-            // customElements.upgrade() seems to do the right thing, in that
-            // it'll only upgrade at the top. Make sure it's available.
+          const host = template.parentElement!;
+          const mode = template.getAttribute('shadowroot');
+          if (mode === 'open' || mode === 'closed') {
+            const delegatesFocus =
+                template.hasAttribute('shadowrootdelegatesfocus');
+            const shadow = host.attachShadow({mode, delegatesFocus});
             shadow.append(template.content);
-            customElements.upgrade(host);
-            currentNode = template;
           }
+          currentNode = template;
         } else {
           if (currentNode.parentElement?.nextElementSibling !== null) {
             currentNode = currentNode.parentElement!.nextElementSibling;
-            template = template?.remove() as undefined;
+            if (template !== undefined) {
+              template.parentElement!.removeChild(template);
+            }
             break;
           }
           currentNode = currentNode.parentElement;
-          template = template?.remove() as undefined;
+          if (template !== undefined) {
+            template.parentElement!.removeChild(template);
+            template = undefined;
+          }
         }
       }
     }
   }
 };
 
-const isTemplate = (e: unknown): e is HTMLTemplateElement => e && (e as Element).tagName === 'TEMPLATE';
-const isElement = (e: unknown): e is HTMLElement => e && (e as Element).nodeType === Node.ELEMENT_NODE;
+const isTemplate = (e: Element|DocumentFragment): e is HTMLTemplateElement =>
+    (e as Element).tagName === 'TEMPLATE';
+const isElement = (e: Element|DocumentFragment): e is HTMLElement =>
+    (e as Element).nodeType === Node.ELEMENT_NODE;
