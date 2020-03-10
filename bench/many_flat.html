@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head></head>
+
+<body>
+  <script type="module">
+    import { hydrateShadowRoots } from '../template-shadowroot.js';
+    const html = `
+      <div>
+        <template shadowroot="open">
+          <div>Hello world</div>
+        </template>
+      </div>
+    `;
+    const start = performance.now();
+    document.body.innerHTML = html.repeat(100);
+    hydrateShadowRoots(document.body);
+    const duration = performance.now() - start;
+    if (document.querySelector('template') === null) {
+      // window.tachometerResult = duration;
+    } else {
+      // fail with a huge time
+      // window.tachometerResult = 9 * 1000 * 1000;
+    }
+    window.tachometerResult = Number(navigator.userAgent.match(/Chrome\/(\d+.\d+)/)[1])
+  </script>
+</body>
+
+</html>

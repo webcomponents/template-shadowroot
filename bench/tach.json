@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json",
+  "timeout": 0.01,
+  "sampleSize": 2,
+  "benchmarks": [
+    {
+      "url": "./bench/many_flat.html",
+      "measurement": "global",
+      "browser": "chrome-headless",
+      "name": "hydrateShadowRoots(document.body)"
+    },
+    {
+      "url": "./bench/many_flat.html",
+      "measurement": "global",
+      "browser": {
+        "name": "chrome",
+        "addArguments": [
+          "--enable-blink-features=DeclarativeShadowDOM"
+        ],
+        "binary": "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
+      }
+    }
+  ]
+}
