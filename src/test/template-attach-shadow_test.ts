@@ -14,8 +14,6 @@
 
 import {hydrateShadowRoots} from '../template-attach-shadow.js';
 
-const assert = chai.assert;
-
 const elementLog: Array<string|null> = [];
 
 class TestLogElement extends HTMLElement {
@@ -28,20 +26,19 @@ class TestLogElement extends HTMLElement {
 customElements.define('test-log', TestLogElement);
 
 // When we serialize
-function assertSerializesAs(
-    actual: Element, expectedSerialization: string, message?: string) {
+function assertSerializesAs(actual: Element, expectedSerialization: string) {
   let actualSerialization = getSerializableTree(actual).innerHTML;
   actualSerialization = actualSerialization.replace(/\n\s+/g, '');
   expectedSerialization = expectedSerialization.replace(/\n\s+/g, '');
-  assert.deepEqual(actualSerialization, expectedSerialization, message);
+  expect(actualSerialization).toEqual(expectedSerialization)
 }
 
-suite('hydrateShadowRoots', () => {
-  teardown(() => {
+describe('hydrateShadowRoots', () => {
+  afterEach(() => {
     elementLog.length = 0;
   });
 
-  test('hydrates a template', () => {
+  it('hydrates a template', () => {
     const root = document.createElement('div');
     const serialized = `
       <test-log label="A">
@@ -53,13 +50,13 @@ suite('hydrateShadowRoots', () => {
     `;
     root.innerHTML = serialized;
     document.body.append(root);
-    assert.deepEqual(elementLog, ['A']);
+    expect(elementLog).toEqual(['A']);
     hydrateShadowRoots(root);
-    assert.deepEqual(elementLog, ['A', 'B']);
+    expect(elementLog).toEqual(['A', 'B']);
     assertSerializesAs(root, serialized);
   });
 
-  test('hydrates nested templates in postorder', () => {
+  it('hydrates nested templates in postorder', () => {
     const root = document.createElement('div');
     const serialized = `
       <test-log label="A">
@@ -78,10 +75,10 @@ suite('hydrateShadowRoots', () => {
     root.innerHTML = serialized;
     // Only needed if we don't explicitly call customElements.upgrade()
     document.body.append(root);
-    assert.deepEqual(elementLog, ['A']);
+    expect(elementLog).toEqual(['A']);
     hydrateShadowRoots(root);
     // If the templates hydrated in document order, D would upgrade before C
-    assert.deepEqual(elementLog, ['A', 'B', 'C', 'D']);
+    expect(elementLog).toEqual(['A', 'B', 'C', 'D']);
     assertSerializesAs(root, serialized);
   });
 
