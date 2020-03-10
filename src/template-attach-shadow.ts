@@ -81,7 +81,7 @@ export const hydrateShadowRoots = (root: ParentNode) => {
   }
 };
 
-const isTemplate = (e: Element|DocumentFragment): e is HTMLTemplateElement =>
-    (e as Element).tagName === 'TEMPLATE';
-const isElement = (e: Element|DocumentFragment): e is HTMLElement =>
-    (e as Element).nodeType === Node.ELEMENT_NODE;
+const isTemplate = (e: Node): e is HTMLTemplateElement =>
+    (e as Partial<Element>).tagName === 'TEMPLATE';
+const isElement = (e: Node): e is HTMLElement =>
+    e.nodeType === Node.ELEMENT_NODE;
