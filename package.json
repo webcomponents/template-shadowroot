@@ -1,12 +1,17 @@
 {
-  "name": "template-attach-shadow",
+  "name": "template-shadowroot",
   "version": "0.0.0",
   "description": "",
-  "main": "template-attach-shadow.js",
+  "main": "template-shadowroot.js",
   "scripts": {
     "build": "tsc",
-    "test": "polymer test --npm"
+    "test": "karma start --single-run",
+    "build:watch": "tsc -w",
+    "test:watch": "karma start"
   },
+  "files": [
+    "template-shadowroot.js"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/webcomponents/template-attach-shadow.git"

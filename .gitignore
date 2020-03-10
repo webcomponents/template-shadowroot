@@ -4,11 +4,5 @@ node_modules/
 .vscode
 
 # build output
-template-attach-shadow.d.ts
-template-attach-shadow.d.ts.map
-template-attach-shadow.js
-template-attach-shadow.js.map
-test/*.d.ts
-test/*.d.ts.map
-test/*.js
-test/*.js.map
+/template-shadowroot.*
+/test/

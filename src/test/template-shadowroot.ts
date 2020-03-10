@@ -12,7 +12,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {hasNativeDeclarativeShadowRoots, hydrateShadowRoots} from '../template-attach-shadow.js';
+import {hasNativeDeclarativeShadowRoots, hydrateShadowRoots} from '../template-shadowroot.js';
 
 const elementLog: Array<string|null> = [];
 
