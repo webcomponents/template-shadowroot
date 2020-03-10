@@ -73,7 +73,6 @@ describe('hydrateShadowRoots', () => {
       </test-log>
     `;
     root.innerHTML = serialized;
-    // Only needed if we don't explicitly call customElements.upgrade()
     document.body.append(root);
     expect(elementLog).toEqual(['A']);
     hydrateShadowRoots(root);
@@ -82,11 +81,108 @@ describe('hydrateShadowRoots', () => {
     assertSerializesAs(root, serialized);
   });
 
+  it('multiple <template shadowroot>s in one host errors', () => {
+    const root = document.createElement('div');
+    const serialized = `
+      <test-log label="A">
+        <template shadowroot="open">
+          <div>One</div>
+        </template>
+        <template shadowroot="open">
+          <div>Two</div>
+        </template>
+        Three
+      </test-log>
+    `;
+    root.innerHTML = serialized;
+    document.body.append(root);
+    expect(() => hydrateShadowRoots(root)).toThrow();
+  });
+
+  it('normal templates are not modified', () => {
+    const root = document.createElement('div');
+    const serialized = `
+      <test-log label="A">
+        <test-log label="B"></test-log>
+        <template>
+          <test-log label="C"></test-log>
+        </template>
+        <test-log label="D"></test-log>
+      </test-log>
+    `;
+    root.innerHTML = serialized;
+    document.body.append(root);
+    expect(elementLog).toEqual(['A', 'B', 'D']);
+    hydrateShadowRoots(root);
+    expect(elementLog).toEqual(['A', 'B', 'D']);
+    assertSerializesAs(root, serialized);
+  });
+
+  it('shadow roots are expanded inside regular templates', () => {
+    const serialized = `
+      <test-log label="A">
+        <test-log label="B"></test-log>
+        <template>
+          <test-log label="C">
+            <template shadowroot="open">
+              <div>Inner</div>
+            </template>
+          </test-log>
+        </template>
+        <test-log label="D"></test-log>
+      </test-log>
+    `;
+    const root = document.createElement('div');
+    root.innerHTML = serialized;
+    document.body.append(root);
+    hydrateShadowRoots(root);
+    const innerShadowRoot = root.querySelector('template')
+                                ?.content.querySelector('test-log')
+                                ?.shadowRoot;
+    expect(innerShadowRoot?.textContent?.trim()).toEqual('Inner');
+    assertSerializesAs(root, serialized);
+  });
+
+  it('can make closed shadow roots', () => {
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <test-log label="A">
+        <template shadowroot="closed">
+          <test-log label="B"></test-log>
+        </template>
+      </test-log>
+    `;
+    // closed shadow root does not get serialized
+    const serialized = `
+      <test-log label="A">
+      </test-log>
+    `;
+    document.body.append(root);
+    expect(elementLog).toEqual(['A']);
+    hydrateShadowRoots(root);
+    expect(elementLog).toEqual(['A', 'B']);
+    assertSerializesAs(root, serialized);
+  });
+
+  it('ignores shadowroot="unknown"', () => {
+    const root = document.createElement('div');
+    const serialized = `
+      <test-log label="A">
+        <template shadowroot="unknown">
+          <test-log label="B"></test-log>
+        </template>
+      </test-log>
+    `;
+    root.innerHTML = serialized;
+    document.body.append(root);
+    expect(elementLog).toEqual(['A']);
+    hydrateShadowRoots(root);
+    expect(elementLog).toEqual(['A']);
+    expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
+    assertSerializesAs(root, serialized);
+  });
+
   // TODO(justinfagnani): more tests...
-  //  * Multiple <template shadowRoot> on one host should error
-  //  * <template> w/o shadowRoot should not be traversed into
-  //  * shadowroot="closed"
-  //  * shadowroot= something invalid
 });
 
 function isTemplate(e: Node): e is HTMLTemplateElement {

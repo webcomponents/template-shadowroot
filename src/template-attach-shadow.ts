@@ -55,16 +55,26 @@ export const hydrateShadowRoots = (root: ParentNode) => {
           template = templateStack.pop()!;
           const host = template.parentElement!;
           const mode = template.getAttribute('shadowroot');
+          currentNode = template;
           if (mode === 'open' || mode === 'closed') {
             const delegatesFocus =
                 template.hasAttribute('shadowrootdelegatesfocus');
             const shadow = host.attachShadow({mode, delegatesFocus});
             shadow.append(template.content);
+          } else {
+            template = undefined;
           }
-          currentNode = template;
         } else {
-          if (currentNode.parentElement?.nextElementSibling !== null) {
-            currentNode = currentNode.parentElement!.nextElementSibling;
+          const nextSibling: Element|null|undefined =
+              (currentNode as Partial<Element>).nextElementSibling;
+          if (nextSibling != null) {
+            currentNode = nextSibling;
+            break;
+          }
+          const nextAunt: Element|null =
+              currentNode.parentElement?.nextElementSibling;
+          if (nextAunt != null) {
+            currentNode = nextAunt;
             if (template !== undefined) {
               template.parentElement!.removeChild(template);
             }
