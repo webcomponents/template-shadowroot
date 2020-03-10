@@ -55,6 +55,8 @@ describe('hydrateShadowRoots', () => {
     }
     hydrateShadowRoots(root);
     expect(elementLog).toEqual(['A', 'B']);
+    expect(root.querySelector('test-log')?.shadowRoot)
+        .toBeInstanceOf(ShadowRoot);
     assertSerializesAs(root, serialized);
   });
 
@@ -80,6 +82,8 @@ describe('hydrateShadowRoots', () => {
       expect(elementLog).toEqual(['A']);
     }
     hydrateShadowRoots(root);
+    expect(root.querySelector('test-log')?.shadowRoot)
+        .toBeInstanceOf(ShadowRoot);
     // If the templates hydrated in document order, D would upgrade before C
     expect(elementLog).toEqual(['A', 'B', 'C', 'D']);
     assertSerializesAs(root, serialized);
@@ -125,6 +129,8 @@ describe('hydrateShadowRoots', () => {
           </test-log>
         `);
       }
+      expect(root.querySelector('test-log')?.shadowRoot)
+          .toBeInstanceOf(ShadowRoot);
     });
 
     it('ignores multiple closed shadow roots', () => {
@@ -155,6 +161,8 @@ describe('hydrateShadowRoots', () => {
         expect(elementLog).toEqual(['A', 'B']);
       }
       assertSerializesAs(root, serialized);
+      // Closed shadow root, so no .shadowRoot field
+      expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
     });
   });
 
@@ -175,6 +183,7 @@ describe('hydrateShadowRoots', () => {
     hydrateShadowRoots(root);
     expect(elementLog).toEqual(['A', 'B', 'D']);
     assertSerializesAs(root, serialized);
+    expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
   });
 
   it('shadow roots are expanded inside regular templates', () => {
@@ -200,6 +209,11 @@ describe('hydrateShadowRoots', () => {
                                 ?.shadowRoot;
     expect(innerShadowRoot?.textContent?.trim()).toEqual('Inner');
     assertSerializesAs(root, serialized);
+    expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
+    expect(root.querySelector('template')
+               ?.content.querySelector('test-log')
+               ?.shadowRoot)
+        .toBeInstanceOf(ShadowRoot);
   });
 
   it('can make closed shadow roots', () => {
@@ -223,6 +237,7 @@ describe('hydrateShadowRoots', () => {
     hydrateShadowRoots(root);
     expect(elementLog).toEqual(['A', 'B']);
     assertSerializesAs(root, serialized);
+    expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
   });
 
   it('ignores shadowroot="unknown"', () => {

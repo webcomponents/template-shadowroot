@@ -21,9 +21,6 @@ module.exports = function(config) {
       // if you are using 'bare module imports' you will need this option
       nodeResolve: true,
     },
-    // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
-    preprocessors: {
-    },
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
     reporters: ['progress'],
     port: 9876,

@@ -12,6 +12,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+// This isn't ideal. Setting .innerHTML is not compatible with some
+// TrustedTypes CSP policies. Discussion at:
+//     https://github.com/mfreed7/declarative-shadow-dom/issues/3
 let hasNative: boolean|undefined;
 export function hasNativeDeclarativeShadowRoots(): boolean {
   if (hasNative === undefined) {
@@ -69,7 +72,7 @@ export const hydrateShadowRoots = (root: ParentNode) => {
       let template: HTMLTemplateElement|undefined;
 
       while (currentNode !== root && currentNode !== null) {
-        if (currentNode.parentElement === null) {
+        if (hasNoParentElement(currentNode)) {
           // We must be at a <template>'s content fragment.
           template = templateStack.pop()!;
           const host = template.parentElement!;
@@ -90,7 +93,7 @@ export const hydrateShadowRoots = (root: ParentNode) => {
           }
         } else {
           const nextSibling: Element|null|undefined =
-              (currentNode as Partial<Element>).nextElementSibling;
+              currentNode.nextElementSibling;
           if (nextSibling != null) {
             currentNode = nextSibling;
             if (template !== undefined) {
@@ -98,7 +101,7 @@ export const hydrateShadowRoots = (root: ParentNode) => {
             }
             break;
           }
-          const nextAunt: Element|null =
+          const nextAunt: Element|null|undefined =
               currentNode.parentElement?.nextElementSibling;
           if (nextAunt != null) {
             currentNode = nextAunt;
@@ -118,6 +121,9 @@ export const hydrateShadowRoots = (root: ParentNode) => {
   }
 };
 
+const hasNoParentElement =
+    (e: Element|DocumentFragment): e is DocumentFragment =>
+        e.parentElement === null;
 const isTemplate = (e: Node): e is HTMLTemplateElement =>
     (e as Partial<Element>).tagName === 'TEMPLATE';
 const isElement = (e: Node): e is HTMLElement =>
