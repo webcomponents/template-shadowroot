@@ -26,7 +26,7 @@ export function hasNativeDeclarativeShadowRoots(): boolean {
  * Traverses the DOM to find all <template> elements with a `shadowroot`
  * attribute and move their content into a ShadowRoot on their parent element.
  *
- * This processing is done depth-first so that when top-level <template>
+ * This processing is done bottom up so that when top-level <template>
  * elements are hydrated, their contents are already hydrated and in the
  * final correct structure of elements and shadow roots.
  */
@@ -34,6 +34,11 @@ export const hydrateShadowRoots = (root: ParentNode) => {
   if (hasNativeDeclarativeShadowRoots()) {
     return;  // nothing to do
   }
+
+  // Approaches to try and benchmark:
+  //  - manual walk (current implementation)
+  //  - querySelectorAll
+  //  - TreeWalker
 
   // Stack of nested templates that we're currently processing. Use to
   // remember how to get from a <template>.content DocumentFragment back to
