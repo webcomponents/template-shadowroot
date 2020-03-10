@@ -12,7 +12,7 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {hydrateShadowRoots} from '../template-attach-shadow.js';
+import {hasNativeDeclarativeShadowRoots, hydrateShadowRoots} from '../template-attach-shadow.js';
 
 const elementLog: Array<string|null> = [];
 
@@ -30,7 +30,7 @@ function assertSerializesAs(actual: Element, expectedSerialization: string) {
   let actualSerialization = getSerializableTree(actual).innerHTML;
   actualSerialization = actualSerialization.replace(/\n\s+/g, '');
   expectedSerialization = expectedSerialization.replace(/\n\s+/g, '');
-  expect(actualSerialization).toEqual(expectedSerialization)
+  expect(actualSerialization).toEqual(expectedSerialization);
 }
 
 describe('hydrateShadowRoots', () => {
@@ -50,7 +50,9 @@ describe('hydrateShadowRoots', () => {
     `;
     root.innerHTML = serialized;
     document.body.append(root);
-    expect(elementLog).toEqual(['A']);
+    if (!hasNativeDeclarativeShadowRoots()) {
+      expect(elementLog).toEqual(['A']);
+    }
     hydrateShadowRoots(root);
     expect(elementLog).toEqual(['A', 'B']);
     assertSerializesAs(root, serialized);
@@ -74,29 +76,13 @@ describe('hydrateShadowRoots', () => {
     `;
     root.innerHTML = serialized;
     document.body.append(root);
-    expect(elementLog).toEqual(['A']);
+    if (!hasNativeDeclarativeShadowRoots()) {
+      expect(elementLog).toEqual(['A']);
+    }
     hydrateShadowRoots(root);
     // If the templates hydrated in document order, D would upgrade before C
     expect(elementLog).toEqual(['A', 'B', 'C', 'D']);
     assertSerializesAs(root, serialized);
-  });
-
-  it('multiple <template shadowroot>s in one host errors', () => {
-    const root = document.createElement('div');
-    const serialized = `
-      <test-log label="A">
-        <template shadowroot="open">
-          <div>One</div>
-        </template>
-        <template shadowroot="open">
-          <div>Two</div>
-        </template>
-        Three
-      </test-log>
-    `;
-    root.innerHTML = serialized;
-    document.body.append(root);
-    expect(() => hydrateShadowRoots(root)).toThrow();
   });
 
   it('normal templates are not modified', () => {
@@ -158,7 +144,9 @@ describe('hydrateShadowRoots', () => {
       </test-log>
     `;
     document.body.append(root);
-    expect(elementLog).toEqual(['A']);
+    if (!hasNativeDeclarativeShadowRoots()) {
+      expect(elementLog).toEqual(['A']);
+    }
     hydrateShadowRoots(root);
     expect(elementLog).toEqual(['A', 'B']);
     assertSerializesAs(root, serialized);

@@ -60,8 +60,14 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['ChromeHeadless'],
+    browsers: ['ChromeHeadless', 'ChromeWithDeclarativeShadowDOM'],
 
+    customLaunchers: {
+      ChromeWithDeclarativeShadowDOM: {
+        base: 'ChromeCanaryHeadless',
+        flags: ['--enable-blink-features=DeclarativeShadowDOM']
+      }
+    },
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits

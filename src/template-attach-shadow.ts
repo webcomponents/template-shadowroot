@@ -12,6 +12,16 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
+let hasNative: boolean|undefined;
+export function hasNativeDeclarativeShadowRoots(): boolean {
+  if (hasNative === undefined) {
+    const div = document.createElement('div');
+    div.innerHTML = `<div><template shadowroot="open"></template></div>`;
+    hasNative = !!div.firstElementChild!.shadowRoot;
+  }
+  return hasNative;
+}
+
 /*
  * Traverses the DOM to find all <template> elements with a `shadowroot`
  * attribute and move their content into a ShadowRoot on their parent element.
@@ -21,6 +31,10 @@
  * final correct structure of elements and shadow roots.
  */
 export const hydrateShadowRoots = (root: ParentNode) => {
+  if (hasNativeDeclarativeShadowRoots()) {
+    return;  // nothing to do
+  }
+
   // Stack of nested templates that we're currently processing. Use to
   // remember how to get from a <template>.content DocumentFragment back to
   // its owner <template>
@@ -59,8 +73,10 @@ export const hydrateShadowRoots = (root: ParentNode) => {
           if (mode === 'open' || mode === 'closed') {
             const delegatesFocus =
                 template.hasAttribute('shadowrootdelegatesfocus');
-            const shadow = host.attachShadow({mode, delegatesFocus});
-            shadow.append(template.content);
+            if (host.shadowRoot === null) {
+              const shadow = host.attachShadow({mode, delegatesFocus});
+              shadow.append(template.content);
+            }
           } else {
             template = undefined;
           }
