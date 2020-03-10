@@ -85,6 +85,79 @@ describe('hydrateShadowRoots', () => {
     assertSerializesAs(root, serialized);
   });
 
+  describe('multiple roots in the same host', () => {
+    // These
+
+    it('ignores multiple open shadow roots', () => {
+      const root = document.createElement('div');
+      root.innerHTML = `
+        <test-log label="A">
+          <template shadowroot="open">
+            <test-log label="B"></test-log>
+          </template>
+          <template shadowroot="open">
+            <test-log label="C"></test-log>
+          </template>
+        </test-log>
+      `;
+      document.body.append(root);
+      // Divergence between native prototype and this polyfill.
+      // Is it intentional? Filed as
+      // https://github.com/mfreed7/declarative-shadow-dom/issues/4
+      if (hasNativeDeclarativeShadowRoots()) {
+        expect(elementLog).toEqual(['A', 'C']);
+        assertSerializesAs(root, `
+          <test-log label="A">
+            <template shadowroot="open">
+              <test-log label="C"></test-log>
+            </template>
+          </test-log>
+        `);
+      } else {
+        expect(elementLog).toEqual(['A']);
+        hydrateShadowRoots(root);
+        expect(elementLog).toEqual(['A', 'B']);
+        assertSerializesAs(root, `
+          <test-log label="A">
+            <template shadowroot="open">
+              <test-log label="B"></test-log>
+            </template>
+          </test-log>
+        `);
+      }
+    });
+
+    it('ignores multiple closed shadow roots', () => {
+      const root = document.createElement('div');
+      root.innerHTML = `
+        <test-log label="A">
+          <template shadowroot="closed">
+            <test-log label="B"></test-log>
+          </template>
+          <template shadowroot="closed">
+            <test-log label="C"></test-log>
+          </template>
+        </test-log>
+      `;
+      const serialized = `
+        <test-log label="A">
+        </test-log>
+      `;
+      document.body.append(root);
+      // Divergence between native prototype and this polyfill.
+      // Is it intentional? Filed as
+      // https://github.com/mfreed7/declarative-shadow-dom/issues/4
+      if (hasNativeDeclarativeShadowRoots()) {
+        expect(elementLog).toEqual(['A', 'C']);
+      } else {
+        expect(elementLog).toEqual(['A']);
+        hydrateShadowRoots(root);
+        expect(elementLog).toEqual(['A', 'B']);
+      }
+      assertSerializesAs(root, serialized);
+    });
+  });
+
   it('normal templates are not modified', () => {
     const root = document.createElement('div');
     const serialized = `

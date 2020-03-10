@@ -73,9 +73,12 @@ export const hydrateShadowRoots = (root: ParentNode) => {
           if (mode === 'open' || mode === 'closed') {
             const delegatesFocus =
                 template.hasAttribute('shadowrootdelegatesfocus');
-            if (host.shadowRoot === null) {
+            try {
               const shadow = host.attachShadow({mode, delegatesFocus});
               shadow.append(template.content);
+            } catch {
+              // there was already a closed shadow root, so do nothing, and
+              // don't delete the template
             }
           } else {
             template = undefined;
@@ -85,6 +88,9 @@ export const hydrateShadowRoots = (root: ParentNode) => {
               (currentNode as Partial<Element>).nextElementSibling;
           if (nextSibling != null) {
             currentNode = nextSibling;
+            if (template !== undefined) {
+              template.parentElement!.removeChild(template);
+            }
             break;
           }
           const nextAunt: Element|null =
