@@ -26,22 +26,38 @@ export const hydrateShadowRoots = (root: Element|DocumentFragment) => {
   if (hasNativeDeclarativeShadowRoots()) {
     return;  // nothing to do
   }
-
-  for (const template of Array.from(root.querySelectorAll('template'))) {
-    hydrateShadowRoots(template.content);
-
-    const host = template.parentElement!;
-    const mode = template.getAttribute('shadowroot');
-    if (mode === 'open' || mode === 'closed') {
-      const delegatesFocus = template.hasAttribute('shadowrootdelegatesfocus');
-      try {
-        const shadow = host.attachShadow({mode, delegatesFocus});
-        shadow.append(template.content);
-      } catch {
-        // there was already a closed shadow root, so do nothing, and
-        // don't delete the template
+  const stack = [{
+    template: undefined as undefined | HTMLTemplateElement,
+    templates: Array.from(root.querySelectorAll('template')).reverse()
+  }];
+  while (stack.length > 0) {
+    const context = stack[stack.length - 1];
+    const childTemplate = context.templates.pop();
+    if (childTemplate === undefined) {
+      const template = context.template;
+      if (template !== undefined) {
+        const host = template.parentElement!;
+        const mode = template.getAttribute('shadowroot');
+        if (mode === 'open' || mode === 'closed') {
+          const delegatesFocus =
+              template.hasAttribute('shadowrootdelegatesfocus');
+          try {
+            const shadow = host.attachShadow({mode, delegatesFocus});
+            shadow.append(template.content);
+          } catch {
+            // there was already a closed shadow root, so do nothing, and
+            // don't delete the template
+          }
+          host.removeChild(template);
+        }
       }
-      host.removeChild(template);
+      stack.pop();
+      continue;
     }
+    stack.push({
+      template: childTemplate,
+      templates: Array.from(childTemplate.content.querySelectorAll('template'))
+                     .reverse()
+    });
   }
 };
