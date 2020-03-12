@@ -6,3 +6,4 @@ node_modules/
 # build output
 /template-shadowroot.*
 /test/
+/_implementation/

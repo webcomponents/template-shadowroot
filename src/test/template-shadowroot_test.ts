@@ -12,7 +12,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {hasNativeDeclarativeShadowRoots, hydrateShadowRoots} from '../template-shadowroot.js';
+import {hydrateShadowRoots as manualWalkHydration} from '../_implementation/manual_walk.js';
+import {hydrateShadowRoots as querySelectorHydration} from '../_implementation/queryselectorall.js';
+import {hasNativeDeclarativeShadowRoots} from '../template-shadowroot.js';
 
 const elementLog: Array<string|null> = [];
 
@@ -32,235 +34,237 @@ function assertSerializesAs(actual: Element, expectedSerialization: string) {
   expectedSerialization = expectedSerialization.replace(/\n\s+/g, '');
   expect(actualSerialization).toEqual(expectedSerialization);
 }
+const implementations = [
+  ['manual walk ponyfill', manualWalkHydration],
+  ['querySelectorAll ponyfill', querySelectorHydration]
+] as const;
+for (const [name, hydrateShadowRoots] of implementations) {
+  describe(name, () => {
+    afterEach(() => {
+      elementLog.length = 0;
+    });
 
-describe('hydrateShadowRoots', () => {
-  afterEach(() => {
-    elementLog.length = 0;
-  });
-
-  it('hydrates a template', () => {
-    const root = document.createElement('div');
-    const serialized = `
-      <test-log label="A">
-        <template shadowroot="open">
-          <h1>Hello</h1>
-          <test-log label="B"></test-log>
-        </template>
-      </test-log>
-    `;
-    root.innerHTML = serialized;
-    document.body.append(root);
-    if (!hasNativeDeclarativeShadowRoots()) {
-      expect(elementLog).toEqual(['A']);
-    }
-    hydrateShadowRoots(root);
-    expect(elementLog).toEqual(['A', 'B']);
-    expect(root.querySelector('test-log')?.shadowRoot)
-        .toBeInstanceOf(ShadowRoot);
-    assertSerializesAs(root, serialized);
-  });
-
-  it('hydrates nested templates in postorder', () => {
-    const root = document.createElement('div');
-    const serialized = `
-      <test-log label="A">
-        <template shadowroot="open">
-          <h1>Hello</h1>
-          <test-log label="B">
-            <template shadowroot="open">
-              <h1>World!</h1>
-              <test-log label="C"></test-log>
-            </template>
-          </test-log>
-          <test-log label="D"></test-log>
-        </template>
-      </test-log>
-    `;
-    root.innerHTML = serialized;
-    document.body.append(root);
-    if (!hasNativeDeclarativeShadowRoots()) {
-      expect(elementLog).toEqual(['A']);
-    }
-    hydrateShadowRoots(root);
-    expect(root.querySelector('test-log')?.shadowRoot)
-        .toBeInstanceOf(ShadowRoot);
-    // If the templates hydrated in document order, D would upgrade before C
-    expect(elementLog).toEqual(['A', 'B', 'C', 'D']);
-    assertSerializesAs(root, serialized);
-  });
-
-  describe('multiple roots in the same host', () => {
-    // These
-
-    it('ignores multiple open shadow roots', () => {
+    it('hydrates a template', () => {
       const root = document.createElement('div');
-      root.innerHTML = `
+      const serialized = `
         <test-log label="A">
           <template shadowroot="open">
+            <h1>Hello</h1>
             <test-log label="B"></test-log>
-          </template>
-          <template shadowroot="open">
-            <test-log label="C"></test-log>
           </template>
         </test-log>
       `;
+      root.innerHTML = serialized;
       document.body.append(root);
-      // Divergence between native prototype and this polyfill.
-      // Is it intentional? Filed as
-      // https://github.com/mfreed7/declarative-shadow-dom/issues/4
-      if (hasNativeDeclarativeShadowRoots()) {
-        expect(elementLog).toEqual(['A', 'C']);
-        assertSerializesAs(root, `
-          <test-log label="A">
-            <template shadowroot="open">
-              <test-log label="C"></test-log>
-            </template>
-          </test-log>
-        `);
-      } else {
+      if (!hasNativeDeclarativeShadowRoots()) {
         expect(elementLog).toEqual(['A']);
-        hydrateShadowRoots(root);
-        expect(elementLog).toEqual(['A', 'B']);
-        assertSerializesAs(root, `
+      }
+      hydrateShadowRoots(root);
+      expect(elementLog).toEqual(['A', 'B']);
+      expect(root.querySelector('test-log')?.shadowRoot)
+          .toBeInstanceOf(ShadowRoot);
+      assertSerializesAs(root, serialized);
+    });
+
+    it('hydrates nested templates in postorder', () => {
+      const root = document.createElement('div');
+      const serialized = `
+        <test-log label="A">
+          <template shadowroot="open">
+            <h1>Hello</h1>
+            <test-log label="B">
+              <template shadowroot="open">
+                <h1>World!</h1>
+                <test-log label="C"></test-log>
+              </template>
+            </test-log>
+            <test-log label="D"></test-log>
+          </template>
+        </test-log>
+      `;
+      root.innerHTML = serialized;
+      document.body.append(root);
+      if (!hasNativeDeclarativeShadowRoots()) {
+        expect(elementLog).toEqual(['A']);
+      }
+      hydrateShadowRoots(root);
+      expect(root.querySelector('test-log')?.shadowRoot)
+          .toBeInstanceOf(ShadowRoot);
+      // If the templates hydrated in document order, D would upgrade before C
+      expect(elementLog).toEqual(['A', 'B', 'C', 'D']);
+      assertSerializesAs(root, serialized);
+    });
+
+    describe('multiple roots in the same host', () => {
+      it('ignores multiple open shadow roots', () => {
+        const root = document.createElement('div');
+        root.innerHTML = `
           <test-log label="A">
             <template shadowroot="open">
               <test-log label="B"></test-log>
             </template>
+            <template shadowroot="open">
+              <test-log label="C"></test-log>
+            </template>
           </test-log>
-        `);
-      }
-      expect(root.querySelector('test-log')?.shadowRoot)
+        `;
+        document.body.append(root);
+        // Divergence between native prototype and this polyfill.
+        // Is it intentional? Filed as
+        // https://github.com/mfreed7/declarative-shadow-dom/issues/4
+        if (hasNativeDeclarativeShadowRoots()) {
+          expect(elementLog).toEqual(['A', 'C']);
+          assertSerializesAs(root, `
+            <test-log label="A">
+              <template shadowroot="open">
+                <test-log label="C"></test-log>
+              </template>
+            </test-log>
+          `);
+        } else {
+          expect(elementLog).toEqual(['A']);
+          hydrateShadowRoots(root);
+          expect(elementLog).toEqual(['A', 'B']);
+          assertSerializesAs(root, `
+            <test-log label="A">
+              <template shadowroot="open">
+                <test-log label="B"></test-log>
+              </template>
+            </test-log>
+          `);
+        }
+        expect(root.querySelector('test-log')?.shadowRoot)
+            .toBeInstanceOf(ShadowRoot);
+      });
+
+      it('ignores multiple closed shadow roots', () => {
+        const root = document.createElement('div');
+        root.innerHTML = `
+          <test-log label="A">
+            <template shadowroot="closed">
+              <test-log label="B"></test-log>
+            </template>
+            <template shadowroot="closed">
+              <test-log label="C"></test-log>
+            </template>
+          </test-log>
+        `;
+        const serialized = `
+          <test-log label="A">
+          </test-log>
+        `;
+        document.body.append(root);
+        // Divergence between native prototype and this polyfill.
+        // Is it intentional? Filed as
+        // https://github.com/mfreed7/declarative-shadow-dom/issues/4
+        if (hasNativeDeclarativeShadowRoots()) {
+          expect(elementLog).toEqual(['A', 'C']);
+        } else {
+          expect(elementLog).toEqual(['A']);
+          hydrateShadowRoots(root);
+          expect(elementLog).toEqual(['A', 'B']);
+        }
+        assertSerializesAs(root, serialized);
+        // Closed shadow root, so no .shadowRoot field
+        expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
+      });
+    });
+
+    it('normal templates are not modified', () => {
+      const root = document.createElement('div');
+      const serialized = `
+        <test-log label="A">
+          <test-log label="B"></test-log>
+          <template>
+            <test-log label="C"></test-log>
+          </template>
+          <test-log label="D"></test-log>
+        </test-log>
+      `;
+      root.innerHTML = serialized;
+      document.body.append(root);
+      expect(elementLog).toEqual(['A', 'B', 'D']);
+      hydrateShadowRoots(root);
+      expect(elementLog).toEqual(['A', 'B', 'D']);
+      assertSerializesAs(root, serialized);
+      expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
+    });
+
+    it('shadow roots are expanded inside regular templates', () => {
+      const serialized = `
+        <test-log label="A">
+          <test-log label="B"></test-log>
+          <template>
+            <test-log label="C">
+              <template shadowroot="open">
+                <div>Inner</div>
+              </template>
+            </test-log>
+          </template>
+          <test-log label="D"></test-log>
+        </test-log>
+      `;
+      const root = document.createElement('div');
+      root.innerHTML = serialized;
+      document.body.append(root);
+      hydrateShadowRoots(root);
+      const innerShadowRoot = root.querySelector('template')
+                                  ?.content.querySelector('test-log')
+                                  ?.shadowRoot;
+      expect(innerShadowRoot?.textContent?.trim()).toEqual('Inner');
+      assertSerializesAs(root, serialized);
+      expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
+      expect(root.querySelector('template')
+                 ?.content.querySelector('test-log')
+                 ?.shadowRoot)
           .toBeInstanceOf(ShadowRoot);
     });
 
-    it('ignores multiple closed shadow roots', () => {
+    it('can make closed shadow roots', () => {
       const root = document.createElement('div');
       root.innerHTML = `
         <test-log label="A">
           <template shadowroot="closed">
             <test-log label="B"></test-log>
           </template>
-          <template shadowroot="closed">
-            <test-log label="C"></test-log>
-          </template>
         </test-log>
       `;
+      // closed shadow root does not get serialized
       const serialized = `
         <test-log label="A">
         </test-log>
       `;
       document.body.append(root);
-      // Divergence between native prototype and this polyfill.
-      // Is it intentional? Filed as
-      // https://github.com/mfreed7/declarative-shadow-dom/issues/4
-      if (hasNativeDeclarativeShadowRoots()) {
-        expect(elementLog).toEqual(['A', 'C']);
-      } else {
+      if (!hasNativeDeclarativeShadowRoots()) {
         expect(elementLog).toEqual(['A']);
-        hydrateShadowRoots(root);
-        expect(elementLog).toEqual(['A', 'B']);
       }
+      hydrateShadowRoots(root);
+      expect(elementLog).toEqual(['A', 'B']);
       assertSerializesAs(root, serialized);
-      // Closed shadow root, so no .shadowRoot field
       expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
     });
-  });
 
-  it('normal templates are not modified', () => {
-    const root = document.createElement('div');
-    const serialized = `
-      <test-log label="A">
-        <test-log label="B"></test-log>
-        <template>
-          <test-log label="C"></test-log>
-        </template>
-        <test-log label="D"></test-log>
-      </test-log>
-    `;
-    root.innerHTML = serialized;
-    document.body.append(root);
-    expect(elementLog).toEqual(['A', 'B', 'D']);
-    hydrateShadowRoots(root);
-    expect(elementLog).toEqual(['A', 'B', 'D']);
-    assertSerializesAs(root, serialized);
-    expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
-  });
-
-  it('shadow roots are expanded inside regular templates', () => {
-    const serialized = `
-      <test-log label="A">
-        <test-log label="B"></test-log>
-        <template>
-          <test-log label="C">
-            <template shadowroot="open">
-              <div>Inner</div>
-            </template>
-          </test-log>
-        </template>
-        <test-log label="D"></test-log>
-      </test-log>
-    `;
-    const root = document.createElement('div');
-    root.innerHTML = serialized;
-    document.body.append(root);
-    hydrateShadowRoots(root);
-    const innerShadowRoot = root.querySelector('template')
-                                ?.content.querySelector('test-log')
-                                ?.shadowRoot;
-    expect(innerShadowRoot?.textContent?.trim()).toEqual('Inner');
-    assertSerializesAs(root, serialized);
-    expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
-    expect(root.querySelector('template')
-               ?.content.querySelector('test-log')
-               ?.shadowRoot)
-        .toBeInstanceOf(ShadowRoot);
-  });
-
-  it('can make closed shadow roots', () => {
-    const root = document.createElement('div');
-    root.innerHTML = `
-      <test-log label="A">
-        <template shadowroot="closed">
-          <test-log label="B"></test-log>
-        </template>
-      </test-log>
-    `;
-    // closed shadow root does not get serialized
-    const serialized = `
-      <test-log label="A">
-      </test-log>
-    `;
-    document.body.append(root);
-    if (!hasNativeDeclarativeShadowRoots()) {
+    it('ignores shadowroot="unknown"', () => {
+      const root = document.createElement('div');
+      const serialized = `
+        <test-log label="A">
+          <template shadowroot="unknown">
+            <test-log label="B"></test-log>
+          </template>
+        </test-log>
+      `;
+      root.innerHTML = serialized;
+      document.body.append(root);
       expect(elementLog).toEqual(['A']);
-    }
-    hydrateShadowRoots(root);
-    expect(elementLog).toEqual(['A', 'B']);
-    assertSerializesAs(root, serialized);
-    expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
+      hydrateShadowRoots(root);
+      expect(elementLog).toEqual(['A']);
+      expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
+      assertSerializesAs(root, serialized);
+    });
+
+    // TODO(justinfagnani): more tests...
   });
-
-  it('ignores shadowroot="unknown"', () => {
-    const root = document.createElement('div');
-    const serialized = `
-      <test-log label="A">
-        <template shadowroot="unknown">
-          <test-log label="B"></test-log>
-        </template>
-      </test-log>
-    `;
-    root.innerHTML = serialized;
-    document.body.append(root);
-    expect(elementLog).toEqual(['A']);
-    hydrateShadowRoots(root);
-    expect(elementLog).toEqual(['A']);
-    expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
-    assertSerializesAs(root, serialized);
-  });
-
-  // TODO(justinfagnani): more tests...
-});
-
+}
 function isTemplate(e: Node): e is HTMLTemplateElement {
   return (e as Partial<Element>).tagName === 'TEMPLATE';
 }

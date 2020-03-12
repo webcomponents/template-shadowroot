@@ -10,7 +10,8 @@
     "test:watch": "karma start"
   },
   "files": [
-    "template-shadowroot.js"
+    "template-shadowroot.js",
+    "_implementation"
   ],
   "repository": {
     "type": "git",
