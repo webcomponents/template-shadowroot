@@ -22,7 +22,7 @@ module.exports = function(config) {
       nodeResolve: true,
     },
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
-    reporters: ['progress'],
+    reporters: ['jasmine-diff', 'progress'],
     port: 9876,
     colors: true,
     // enable / disable watching file and executing tests whenever any file changes
