@@ -17,16 +17,23 @@
       } else {
         return 9 * 1000 * 1000;
       }
-      const html = `
-        <div>
+      let html = '';
+      const n = 1000;
+      for (let i = 0; i < n; i++) {
+        html += `<div>
           <template shadowroot="open">
-            <div>Hello world</div>
-          </template>
-        </div>
-      `;
+        `;
+      }
+      for (let i = 0; i < n; i++) {
+        html += `
+              <div>Hello world</div>
+            </template>
+          </div>
+        `;
+      }
 
       const start = performance.now();
-      document.body.innerHTML = html.repeat(1000);
+      document.body.innerHTML = html;
       hydrateShadowRoots(document.body);
       const duration = performance.now() - start;
       if (document.querySelector('template') === null) {

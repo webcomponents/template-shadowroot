@@ -1,24 +1,29 @@
 {
   "$schema": "https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json",
-  "timeout": 0.01,
-  "sampleSize": 2,
+  "timeout": 0.001,
+  "sampleSize": 25,
   "benchmarks": [
     {
-      "url": "./bench/many_flat.html",
       "measurement": "global",
       "browser": "chrome-headless",
-      "name": "hydrateShadowRoots(document.body)"
-    },
-    {
-      "url": "./bench/many_flat.html",
-      "measurement": "global",
-      "browser": {
-        "name": "chrome",
-        "addArguments": [
-          "--enable-blink-features=DeclarativeShadowDOM"
-        ],
-        "binary": "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
-      }
+      "expand": [
+        {
+          "url": "./bench/many_flat.html?manualWalk",
+          "name": "flat tree: manual walk"
+        },
+        {
+          "url": "./bench/many_flat.html?querySelector",
+          "name": "flat tree: querySelectorAll"
+        },
+        {
+          "url": "./bench/many_deep.html?manualWalk",
+          "name": "deep tree: manual walk"
+        },
+        {
+          "url": "./bench/many_deep.html?querySelector",
+          "name": "deep tree: querySelectorAll"
+        }
+      ]
     }
   ]
 }
