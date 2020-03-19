@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head></head>
+
+<body>
+  <!--
+    Benchmarks an HTML document with <template shadowroot> elements inside of
+    <template shadowroot> elements, nested deeply.
+   -->
+  <script type="module">
+    import { hydrateShadowRoots as manualWalkHydration } from '../_implementation/manual_walk.js';
+    import { hydrateShadowRoots as querySelectorHydration } from '../_implementation/queryselectorall.js';
+
+    const implausiblyLongTimeToIndicateFailure = 9 * 1000 * 1000;
+
+    function benchmark(hydrateMethod) {
+      let hydrateShadowRoots;
+      if (hydrateMethod === 'manualWalk') {
+        hydrateShadowRoots = manualWalkHydration;
+      } else if (hydrateMethod === 'querySelector') {
+        hydrateShadowRoots = querySelectorHydration;
+      } else {
+        return implausiblyLongTimeToIndicateFailure;
+      }
+      let html = '';
+      const n = 1000;
+      for (let i = 0; i < n; i++) {
+        html += `<div>
+          <template shadowroot="open">
+        `;
+      }
+      for (let i = 0; i < n; i++) {
+        html += `
+              <div>Hello world</div>
+            </template>
+          </div>
+        `;
+      }
+
+      const start = performance.now();
+      document.body.innerHTML = html;
+      hydrateShadowRoots(document.body);
+      const duration = performance.now() - start;
+      if (document.querySelector('template') === null) {
+        return duration;
+      } else {
+        // hydration failed, still see templates in the document!
+        return implausiblyLongTimeToIndicateFailure;
+      }
+    }
+
+    window.tachometerResult = benchmark(window.location.search.slice(1));
+  </script>
+</body>
+
+</html>

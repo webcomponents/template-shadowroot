@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright (c) 2019 The Polymer Project Authors. All rights reserved.
+ * Copyright (c) 2020 The Polymer Project Authors. All rights reserved.
  * This code may only be used under the BSD style license found at
  * http://polymer.github.io/LICENSE.txt
  * The complete set of authors may be found at
@@ -12,7 +12,5 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {hasNativeDeclarativeShadowRoots} from './_implementation/feature_detect.js';
-import {hydrateShadowRoots} from './_implementation/default_implementation.js';
-
-export {hasNativeDeclarativeShadowRoots, hydrateShadowRoots};
+// TODO(rictic): do more robust benchmarks and pick a winner.
+export {hydrateShadowRoots} from './manual_walk.js';

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Polymer/tachometer/master/config.schema.json",
+  "timeout": 0.001,
+  "sampleSize": 25,
+  "benchmarks": [
+    {
+      "measurement": "global",
+      "browser": "chrome-headless",
+      "expand": [
+        {
+          "url": "./bench/many_flat.html?manualWalk",
+          "name": "flat tree: manual walk"
+        },
+        {
+          "url": "./bench/many_flat.html?querySelector",
+          "name": "flat tree: querySelectorAll"
+        },
+        {
+          "url": "./bench/many_deep.html?manualWalk",
+          "name": "deep tree: manual walk"
+        },
+        {
+          "url": "./bench/many_deep.html?querySelector",
+          "name": "deep tree: querySelectorAll"
+        }
+      ]
+    }
+  ]
+}
