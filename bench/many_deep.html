@@ -8,6 +8,8 @@
     import { hydrateShadowRoots as manualWalkHydration } from '../_implementation/manual_walk.js';
     import { hydrateShadowRoots as querySelectorHydration } from '../_implementation/queryselectorall.js';
 
+    const implausiblyLongTimeToIndicateFailure = 9 * 1000 * 1000;
+
     function benchmark(hydrateMethod) {
       let hydrateShadowRoots;
       if (hydrateMethod === 'manualWalk') {
@@ -15,7 +17,7 @@
       } else if (hydrateMethod === 'querySelector') {
         hydrateShadowRoots = querySelectorHydration;
       } else {
-        return 9 * 1000 * 1000;
+        return implausiblyLongTimeToIndicateFailure;
       }
       let html = '';
       const n = 1000;
@@ -40,7 +42,7 @@
         return duration;
       } else {
         // hydration failed, still see templates in the document!
-        return 9 * 1000 * 1000;
+        return implausiblyLongTimeToIndicateFailure;
       }
     }
 

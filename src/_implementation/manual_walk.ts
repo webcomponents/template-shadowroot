@@ -12,8 +12,8 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import { hasNativeDeclarativeShadowRoots } from './feature_detect.js';
-import { isTemplate, isElement, hasNoParentElement } from './util.js';
+import {hasNativeDeclarativeShadowRoots} from './feature_detect.js';
+import {hasNoParentElement, isElement, isTemplate} from './util.js';
 
 /*
  * Traverses the DOM to find all <template> elements with a `shadowroot`
@@ -75,8 +75,8 @@ export const hydrateShadowRoots = (root: ParentNode) => {
               const shadow = host.attachShadow({mode, delegatesFocus});
               shadow.append(template.content);
             } catch {
-              // there was already a closed shadow root, so do nothing, and
-              // don't delete the template
+              // there was already a shadow root.
+              // TODO(rictic): log an error event?
             }
           } else {
             template = undefined;

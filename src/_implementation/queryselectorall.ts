@@ -14,6 +14,22 @@
 
 import {hasNativeDeclarativeShadowRoots} from './feature_detect.js';
 
+interface StackEntry {
+  /**
+   * The nearest ancestor <template> element, if any, of the templates.
+   */
+  template: HTMLTemplateElement|undefined;
+  /**
+   * A stack of template elements inside `template` – or `root` if `template` is
+   * undefined – to be processed.
+   *
+   * The array is in reverse document order, such that the elements at the end
+   * of the array should be processed first (so that we can use templates.pop()
+   * to get the next element to process).
+   */
+  templates: HTMLTemplateElement[];
+}
+
 /*
  * Traverses the DOM to find all <template> elements with a `shadowroot`
  * attribute and move their content into a ShadowRoot on their parent element.
@@ -26,8 +42,8 @@ export const hydrateShadowRoots = (root: Element|DocumentFragment) => {
   if (hasNativeDeclarativeShadowRoots()) {
     return;  // nothing to do
   }
-  const stack = [{
-    template: undefined as undefined | HTMLTemplateElement,
+  const stack: StackEntry[] = [{
+    template: undefined,
     templates: Array.from(root.querySelectorAll('template')).reverse()
   }];
   while (stack.length > 0) {
@@ -45,8 +61,8 @@ export const hydrateShadowRoots = (root: Element|DocumentFragment) => {
             const shadow = host.attachShadow({mode, delegatesFocus});
             shadow.append(template.content);
           } catch {
-            // there was already a closed shadow root, so do nothing, and
-            // don't delete the template
+            // there was already a shadow root.
+            // TODO(rictic): log an error event?
           }
           host.removeChild(template);
         }
