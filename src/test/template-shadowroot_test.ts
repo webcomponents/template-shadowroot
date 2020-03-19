@@ -13,10 +13,20 @@
  */
 
 import {hydrateShadowRoots as manualWalkHydration} from '../_implementation/manual_walk.js';
+import {transformShadowRoots} from '../_implementation/mutation_observer';
 import {hydrateShadowRoots as querySelectorHydration} from '../_implementation/queryselectorall.js';
 import {hasNativeDeclarativeShadowRoots} from '../template-shadowroot.js';
 
 const elementLog: Array<string|null> = [];
+
+// for syntax highlighting
+function html(s: TemplateStringsArray) {
+  return s.join('');
+}
+
+async function waitATickForMutationObserverToRun() {
+  return 0;
+}
 
 class TestLogElement extends HTMLElement {
   constructor() {
@@ -36,17 +46,28 @@ function assertSerializesAs(actual: Element, expectedSerialization: string) {
 }
 const implementations = [
   ['manual walk ponyfill', manualWalkHydration],
-  ['querySelectorAll ponyfill', querySelectorHydration]
+  ['querySelectorAll ponyfill', querySelectorHydration],
+  ['mutationObserver', () => {/* see below */}],
 ] as const;
 for (const [name, hydrateShadowRoots] of implementations) {
   describe(name, () => {
+    let cleanupFn = () => {};
+    const automaticHydration =
+        name === 'mutationObserver' || hasNativeDeclarativeShadowRoots();
+    beforeEach(() => {
+      if (name === 'mutationObserver') {
+        let {cleanup} = transformShadowRoots();
+        cleanupFn = cleanup;
+      }
+    });
     afterEach(() => {
       elementLog.length = 0;
+      cleanupFn();
     });
 
-    it('hydrates a template', () => {
+    it('hydrates a template', async () => {
       const root = document.createElement('div');
-      const serialized = `
+      const serialized = html`
         <test-log label="A">
           <template shadowroot="open">
             <h1>Hello</h1>
@@ -56,7 +77,8 @@ for (const [name, hydrateShadowRoots] of implementations) {
       `;
       root.innerHTML = serialized;
       document.body.append(root);
-      if (!hasNativeDeclarativeShadowRoots()) {
+      await waitATickForMutationObserverToRun();
+      if (!automaticHydration) {
         expect(elementLog).toEqual(['A']);
       }
       hydrateShadowRoots(root);
@@ -66,9 +88,9 @@ for (const [name, hydrateShadowRoots] of implementations) {
       assertSerializesAs(root, serialized);
     });
 
-    it('hydrates nested templates in postorder', () => {
+    it('hydrates nested templates in postorder', async () => {
       const root = document.createElement('div');
-      const serialized = `
+      const serialized = html`
         <test-log label="A">
           <template shadowroot="open">
             <h1>Hello</h1>
@@ -84,7 +106,8 @@ for (const [name, hydrateShadowRoots] of implementations) {
       `;
       root.innerHTML = serialized;
       document.body.append(root);
-      if (!hasNativeDeclarativeShadowRoots()) {
+      await waitATickForMutationObserverToRun();
+      if (!automaticHydration) {
         expect(elementLog).toEqual(['A']);
       }
       hydrateShadowRoots(root);
@@ -96,9 +119,9 @@ for (const [name, hydrateShadowRoots] of implementations) {
     });
 
     describe('multiple roots in the same host', () => {
-      it('ignores multiple open shadow roots', () => {
+      it('ignores multiple open shadow roots', async () => {
         const root = document.createElement('div');
-        root.innerHTML = `
+        root.innerHTML = html`
           <test-log label="A">
             <template shadowroot="open">
               <test-log label="B"></test-log>
@@ -109,12 +132,13 @@ for (const [name, hydrateShadowRoots] of implementations) {
           </test-log>
         `;
         document.body.append(root);
+        await waitATickForMutationObserverToRun();
         // Divergence between native prototype and this polyfill.
         // Is it intentional? Filed as
         // https://github.com/mfreed7/declarative-shadow-dom/issues/4
         if (hasNativeDeclarativeShadowRoots()) {
           expect(elementLog).toEqual(['A', 'C']);
-          assertSerializesAs(root, `
+          assertSerializesAs(root, html`
             <test-log label="A">
               <template shadowroot="open">
                 <test-log label="C"></test-log>
@@ -122,10 +146,12 @@ for (const [name, hydrateShadowRoots] of implementations) {
             </test-log>
           `);
         } else {
-          expect(elementLog).toEqual(['A']);
+          if (!automaticHydration) {
+            expect(elementLog).toEqual(['A']);
+          }
           hydrateShadowRoots(root);
           expect(elementLog).toEqual(['A', 'B']);
-          assertSerializesAs(root, `
+          assertSerializesAs(root, html`
             <test-log label="A">
               <template shadowroot="open">
                 <test-log label="B"></test-log>
@@ -137,9 +163,9 @@ for (const [name, hydrateShadowRoots] of implementations) {
             .toBeInstanceOf(ShadowRoot);
       });
 
-      it('ignores multiple closed shadow roots', () => {
+      it('ignores multiple closed shadow roots', async () => {
         const root = document.createElement('div');
-        root.innerHTML = `
+        root.innerHTML = html`
           <test-log label="A">
             <template shadowroot="closed">
               <test-log label="B"></test-log>
@@ -154,13 +180,16 @@ for (const [name, hydrateShadowRoots] of implementations) {
           </test-log>
         `;
         document.body.append(root);
+        await waitATickForMutationObserverToRun();
         // Divergence between native prototype and this polyfill.
         // Is it intentional? Filed as
         // https://github.com/mfreed7/declarative-shadow-dom/issues/4
         if (hasNativeDeclarativeShadowRoots()) {
           expect(elementLog).toEqual(['A', 'C']);
         } else {
-          expect(elementLog).toEqual(['A']);
+          if (!automaticHydration) {
+            expect(elementLog).toEqual(['A']);
+          }
           hydrateShadowRoots(root);
           expect(elementLog).toEqual(['A', 'B']);
         }
@@ -170,9 +199,9 @@ for (const [name, hydrateShadowRoots] of implementations) {
       });
     });
 
-    it('normal templates are not modified', () => {
+    it('normal templates are not modified', async () => {
       const root = document.createElement('div');
-      const serialized = `
+      const serialized = html`
         <test-log label="A">
           <test-log label="B"></test-log>
           <template>
@@ -183,6 +212,7 @@ for (const [name, hydrateShadowRoots] of implementations) {
       `;
       root.innerHTML = serialized;
       document.body.append(root);
+      await waitATickForMutationObserverToRun();
       expect(elementLog).toEqual(['A', 'B', 'D']);
       hydrateShadowRoots(root);
       expect(elementLog).toEqual(['A', 'B', 'D']);
@@ -190,8 +220,8 @@ for (const [name, hydrateShadowRoots] of implementations) {
       expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
     });
 
-    it('shadow roots are expanded inside regular templates', () => {
-      const serialized = `
+    it('shadow roots are expanded inside regular templates', async () => {
+      const serialized = html`
         <test-log label="A">
           <test-log label="B"></test-log>
           <template>
@@ -207,6 +237,7 @@ for (const [name, hydrateShadowRoots] of implementations) {
       const root = document.createElement('div');
       root.innerHTML = serialized;
       document.body.append(root);
+      await waitATickForMutationObserverToRun();
       hydrateShadowRoots(root);
       const innerShadowRoot = root.querySelector('template')
                                   ?.content.querySelector('test-log')
@@ -220,9 +251,9 @@ for (const [name, hydrateShadowRoots] of implementations) {
           .toBeInstanceOf(ShadowRoot);
     });
 
-    it('can make closed shadow roots', () => {
+    it('can make closed shadow roots', async () => {
       const root = document.createElement('div');
-      root.innerHTML = `
+      root.innerHTML = html`
         <test-log label="A">
           <template shadowroot="closed">
             <test-log label="B"></test-log>
@@ -235,7 +266,8 @@ for (const [name, hydrateShadowRoots] of implementations) {
         </test-log>
       `;
       document.body.append(root);
-      if (!hasNativeDeclarativeShadowRoots()) {
+      await waitATickForMutationObserverToRun();
+      if (!automaticHydration) {
         expect(elementLog).toEqual(['A']);
       }
       hydrateShadowRoots(root);
@@ -244,9 +276,9 @@ for (const [name, hydrateShadowRoots] of implementations) {
       expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
     });
 
-    it('ignores shadowroot="unknown"', () => {
+    it('ignores shadowroot="unknown"', async () => {
       const root = document.createElement('div');
-      const serialized = `
+      const serialized = html`
         <test-log label="A">
           <template shadowroot="unknown">
             <test-log label="B"></test-log>
@@ -255,6 +287,7 @@ for (const [name, hydrateShadowRoots] of implementations) {
       `;
       root.innerHTML = serialized;
       document.body.append(root);
+      await waitATickForMutationObserverToRun();
       expect(elementLog).toEqual(['A']);
       hydrateShadowRoots(root);
       expect(elementLog).toEqual(['A']);
