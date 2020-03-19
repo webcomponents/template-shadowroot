@@ -4,6 +4,10 @@
 <head></head>
 
 <body>
+  <!--
+    Benchmarks an HTML document with many small consecutive
+    <template shadowroot> elements.
+  -->
   <script type="module">
     import { hydrateShadowRoots as manualWalkHydration } from '../_implementation/manual_walk.js';
     import { hydrateShadowRoots as querySelectorHydration } from '../_implementation/queryselectorall.js';

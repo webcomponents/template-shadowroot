@@ -20,4 +20,4 @@ If native support for `<template shadowroot>` is present, `hydrateShadowRoots` d
 * The mutation observer implementation
   * May not work properly in the face of streaming HTML parsing. Needs investigation.
   * Will not notice imperatively created `<template shadowroot>` elements inside of other shadow roots.
-
+* Not enough benchmarks, and benchmarks of insufficient quality to be confident of good performance.
