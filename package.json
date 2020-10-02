@@ -12,6 +12,9 @@
   },
   "files": [
     "template-shadowroot.js",
+    "template-shadowroot.js.map",
+    "template-shadowroot.d.ts",
+    "template-shadowroot.d.ts.map",
     "_implementation",
     "/src/",
     "tsconfig.json",
