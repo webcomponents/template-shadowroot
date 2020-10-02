@@ -7,11 +7,15 @@
     "build": "tsc",
     "test": "karma start --single-run",
     "build:watch": "tsc -w",
-    "test:watch": "karma start"
+    "test:watch": "karma start",
+    "prepare": "npm run build"
   },
   "files": [
     "template-shadowroot.js",
-    "_implementation"
+    "_implementation",
+    "/src/",
+    "tsconfig.json",
+    "!/src/test/"
   ],
   "repository": {
     "type": "git",
