@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "description": "",
   "main": "template-shadowroot.js",
+  "browser": true,
+  "type": "module",
   "scripts": {
     "build": "tsc --build && rollup --config rollup.config.js",
     "test": "karma start --single-run",
