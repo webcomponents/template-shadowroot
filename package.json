@@ -4,13 +4,13 @@
   "description": "",
   "main": "template-shadowroot.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build && rollup --config rollup.config.js",
     "test": "karma start --single-run",
-    "build:watch": "tsc -w",
+    "build:watch": "tsc --build --watch",
     "test:watch": "karma start"
   },
   "files": [
-    "template-shadowroot.js",
+    "template-shadowroot.*",
     "_implementation"
   ],
   "repository": {
@@ -38,6 +38,8 @@
     "karma-jasmine": "^3.1.1",
     "karma-jasmine-diff-reporter": "^2.0.0",
     "karma-safari-launcher": "^1.0.0",
+    "rollup": "^2.41.5",
+    "rollup-plugin-terser": "^7.0.2",
     "tachometer": "^0.4.16",
     "typescript": "^3.7.2"
   }
