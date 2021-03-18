@@ -41,6 +41,7 @@
     "karma-jasmine-diff-reporter": "^2.0.0",
     "karma-safari-launcher": "^1.0.0",
     "rollup": "^2.41.5",
+    "rollup-plugin-sourcemaps": "^0.6.3",
     "rollup-plugin-terser": "^7.0.2",
     "tachometer": "^0.4.16",
     "typescript": "^3.7.2"

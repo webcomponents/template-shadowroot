@@ -1,4 +1,5 @@
 import {terser} from 'rollup-plugin-terser';
+import sourcemaps from 'rollup-plugin-sourcemaps';
 
 export default {
   input: 'template-shadowroot.js',
@@ -14,12 +15,14 @@ export default {
       },
       mangle: {
         reserved: ['TemplateShadowRoot'],
-      }
+      },
     }),
+    sourcemaps(),
   ],
   output: {
     file: 'template-shadowroot.min.js',
     format: 'iife',
     name: 'TemplateShadowRoot',
+    sourcemap: true,
   },
 };
