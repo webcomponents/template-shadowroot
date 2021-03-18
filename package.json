@@ -7,9 +7,9 @@
   "type": "module",
   "scripts": {
     "build": "tsc --build && rollup --config rollup.config.js",
-    "test": "karma start --single-run",
+    "test": "karma start karma.conf.cjs --single-run",
     "build:watch": "tsc --build --watch",
-    "test:watch": "karma start"
+    "test:watch": "karma start karma.conf.cjs"
   },
   "files": [
     "template-shadowroot.*",
