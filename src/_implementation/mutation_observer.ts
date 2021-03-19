@@ -12,9 +12,9 @@
  * http://polymer.github.io/PATENTS.txt
  */
 
-import {hydrateShadowRoots} from './default_implementation';
+import {hydrateShadowRoots} from './default_implementation.js';
 
-import {hasNativeDeclarativeShadowRoots} from './feature_detect';
+import {hasNativeDeclarativeShadowRoots} from './feature_detect.js';
 
 export function transformShadowRoots(within: Node = document) {
   if (hasNativeDeclarativeShadowRoots()) {
