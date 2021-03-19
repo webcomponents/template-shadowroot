@@ -24,7 +24,7 @@
     "url": "git+https://github.com/webcomponents/template-shadowroot.git"
   },
   "keywords": [],
-  "author": "The Polymer Authors",
+  "author": "Google LLC",
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/webcomponents/template-shadowroot/issues"
