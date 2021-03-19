@@ -1,8 +1,9 @@
 {
-  "name": "template-shadowroot",
+  "name": "@webcomponents/template-shadowroot",
   "version": "0.0.0",
   "description": "",
   "main": "template-shadowroot.js",
+  "module": "template-shadowroot.js",
   "browser": true,
   "type": "module",
   "scripts": {
