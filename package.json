@@ -6,6 +6,9 @@
   "module": "template-shadowroot.js",
   "browser": true,
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc --build && rollup --config rollup.config.js",
     "test": "karma start karma.conf.cjs --single-run",
@@ -18,15 +21,15 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/webcomponents/template-attach-shadow.git"
+    "url": "git+https://github.com/webcomponents/template-shadowroot.git"
   },
   "keywords": [],
   "author": "The Polymer Authors",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/webcomponents/template-attach-shadow/issues"
+    "url": "https://github.com/webcomponents/template-shadowroot/issues"
   },
-  "homepage": "https://github.com/webcomponents/template-attach-shadow#readme",
+  "homepage": "https://github.com/webcomponents/template-shadowroot#readme",
   "devDependencies": {
     "@open-wc/karma-esm": "^2.13.14",
     "@types/jasmine": "^3.5.8",
