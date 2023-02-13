@@ -59,7 +59,7 @@ export const hydrateShadowRoots = (root: ParentNode) => {
           // We must be at a <template>'s content fragment.
           template = templateStack.pop()!;
           const host = template.parentElement!;
-          const mode = template.getAttribute('shadowroot') || template.getAttribute('shadowrootmode');
+          const mode = template.getAttribute('shadowrootmode') || template.getAttribute('shadowroot');
           currentNode = template;
           if (mode === 'open' || mode === 'closed') {
             const delegatesFocus =

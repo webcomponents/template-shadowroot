@@ -45,7 +45,7 @@ export const hydrateShadowRoots = (root: Element|DocumentFragment) => {
       const template = context.template;
       if (template !== undefined) {
         const host = template.parentElement!;
-        const mode = template.getAttribute('shadowroot') || template.getAttribute('shadowrootmode');
+        const mode = template.getAttribute('shadowrootmode') || template.getAttribute('shadowroot');
         if (mode === 'open' || mode === 'closed') {
           const delegatesFocus =
               template.hasAttribute('shadowrootdelegatesfocus');
