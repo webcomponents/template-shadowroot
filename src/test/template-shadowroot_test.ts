@@ -57,7 +57,7 @@ for (const [name, hydrateShadowRoots] of implementations) {
       cleanupFn();
     });
 
-    it('hydrates a template', async () => {
+    it('hydrates a template with old DSD syntax', async () => {
       const root = document.createElement('div');
       const serialized = html`
         <test-log label="A">
@@ -80,14 +80,60 @@ for (const [name, hydrateShadowRoots] of implementations) {
       assertSerializesAs(root, serialized);
     });
 
+    it('hydrates a template with streaming DSD syntax', async () => {
+      const root = document.createElement('div');
+      const serialized = html`
+        <test-log label="A">
+          <template shadowrootmode="open">
+            <h1>Hello</h1>
+            <test-log label="B"></test-log>
+          </template>
+        </test-log>
+      `;
+      root.innerHTML = serialized;
+      document.body.append(root);
+      await waitATickForMutationObserverToRun();
+      if (!automaticHydration) {
+        expect(elementLog).toEqual(['A']);
+      }
+      hydrateShadowRoots(root);
+      expect(elementLog).toEqual(['A', 'B']);
+      expect(root.querySelector('test-log')?.shadowRoot)
+          .toBeInstanceOf(ShadowRoot);
+      assertSerializesAs(root, serialized);
+    });
+
+    it('hydrates a template with both syntaxes', async () => {
+      const root = document.createElement('div');
+      const serialized = html`
+        <test-log label="A">
+          <template shadowroot="open" shadowrootmode="open">
+            <h1>Hello</h1>
+            <test-log label="B"></test-log>
+          </template>
+        </test-log>
+      `;
+      root.innerHTML = serialized;
+      document.body.append(root);
+      await waitATickForMutationObserverToRun();
+      if (!automaticHydration) {
+        expect(elementLog).toEqual(['A']);
+      }
+      hydrateShadowRoots(root);
+      expect(elementLog).toEqual(['A', 'B']);
+      expect(root.querySelector('test-log')?.shadowRoot)
+          .toBeInstanceOf(ShadowRoot);
+      assertSerializesAs(root, serialized);
+    });
+
     it('hydrates nested templates in postorder', async () => {
       const root = document.createElement('div');
       const serialized = html`
         <test-log label="A">
-          <template shadowroot="open">
+          <template shadowrootmode="open">
             <h1>Hello</h1>
             <test-log label="B">
-              <template shadowroot="open">
+              <template shadowrootmode="open">
                 <h1>World!</h1>
                 <test-log label="C"></test-log>
               </template>
@@ -115,10 +161,10 @@ for (const [name, hydrateShadowRoots] of implementations) {
         const root = document.createElement('div');
         root.innerHTML = html`
           <test-log label="A">
-            <template shadowroot="open">
+            <template shadowrootmode="open">
               <test-log label="B"></test-log>
             </template>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
               <test-log label="C"></test-log>
             </template>
           </test-log>
@@ -132,7 +178,7 @@ for (const [name, hydrateShadowRoots] of implementations) {
           expect(elementLog).toEqual(['A', 'C']);
           assertSerializesAs(root, html`
             <test-log label="A">
-              <template shadowroot="open">
+              <template shadowrootmode="open">
                 <test-log label="C"></test-log>
               </template>
             </test-log>
@@ -145,7 +191,7 @@ for (const [name, hydrateShadowRoots] of implementations) {
           expect(elementLog).toEqual(['A', 'B']);
           assertSerializesAs(root, html`
             <test-log label="A">
-              <template shadowroot="open">
+              <template shadowrootmode="open">
                 <test-log label="B"></test-log>
               </template>
             </test-log>
@@ -159,10 +205,10 @@ for (const [name, hydrateShadowRoots] of implementations) {
         const root = document.createElement('div');
         root.innerHTML = html`
           <test-log label="A">
-            <template shadowroot="closed">
+            <template shadowrootmode="closed">
               <test-log label="B"></test-log>
             </template>
-            <template shadowroot="closed">
+            <template shadowrootmode="closed">
               <test-log label="C"></test-log>
             </template>
           </test-log>
@@ -218,7 +264,7 @@ for (const [name, hydrateShadowRoots] of implementations) {
           <test-log label="B"></test-log>
           <template>
             <test-log label="C">
-              <template shadowroot="open">
+              <template shadowrootmode="open">
                 <div>Inner</div>
               </template>
             </test-log>
@@ -247,7 +293,7 @@ for (const [name, hydrateShadowRoots] of implementations) {
       const root = document.createElement('div');
       root.innerHTML = html`
         <test-log label="A">
-          <template shadowroot="closed">
+          <template shadowrootmode="closed">
             <test-log label="B"></test-log>
           </template>
         </test-log>
@@ -268,11 +314,11 @@ for (const [name, hydrateShadowRoots] of implementations) {
       expect(root.querySelector('test-log')?.shadowRoot).toEqual(null);
     });
 
-    it('ignores shadowroot="unknown"', async () => {
+    it('ignores shadowrootmode="unknown"', async () => {
       const root = document.createElement('div');
       const serialized = html`
         <test-log label="A">
-          <template shadowroot="unknown">
+          <template shadowrootmode="unknown">
             <test-log label="B"></test-log>
           </template>
         </test-log>
@@ -328,7 +374,7 @@ function getSerializableTree<T extends Node>(node: T): T {
     }
     if (node.shadowRoot !== null) {
       const shadowTemplate = document.createElement('template');
-      shadowTemplate.setAttribute('shadowroot', 'open');
+      shadowTemplate.setAttribute('shadowrootmode', 'open');
       copyTemplateContents(node.shadowRoot, shadowTemplate.content);
       clone.appendChild(shadowTemplate);
     }

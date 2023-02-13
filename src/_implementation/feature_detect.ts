@@ -17,7 +17,7 @@ interface DOMParser {
 let hasNative: boolean|undefined;
 export function hasNativeDeclarativeShadowRoots(): boolean {
   if (hasNative === undefined) {
-    const html = `<div><template shadowroot="open"></template></div>`;
+    const html = `<div><template shadowroot="open" shadowrootmode="open"></template></div>`;
     const fragment = (new DOMParser() as DOMParser).parseFromString(html, 'text/html', {
       includeShadowRoots: true
     });
