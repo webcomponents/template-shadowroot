@@ -30,8 +30,8 @@ interface StackEntry {
  * elements are hydrated, their contents are already hydrated and in the
  * final correct structure of elements and shadow roots.
  */
-export const hydrateShadowRoots = (root: Element|DocumentFragment, force = false) => {
-  if (!force && hasNativeDeclarativeShadowRoots()) {
+export const hydrateShadowRoots = (root: Element|DocumentFragment) => {
+  if (hasNativeDeclarativeShadowRoots()) {
     return;  // nothing to do
   }
   const stack: StackEntry[] = [{
