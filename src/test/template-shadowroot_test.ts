@@ -59,10 +59,9 @@ customElements.define('test-log', TestLogElement);
 // When we serialize
 function assertSerializesAs(
   actual: Element,
-  expectedSerialization: string,
-  syntax = { shadowroot: true, shadowrootmode: true }
+  expectedSerialization: string
 ) {
-  let actualSerialization = getSerializableTree(actual, syntax).innerHTML;
+  let actualSerialization = getSerializableTree(actual).innerHTML;
   actualSerialization = actualSerialization.replace(/\n\s+/g, '');
   expectedSerialization = expectedSerialization.replace(/\n\s+/g, '');
   expect(actualSerialization).equal(expectedSerialization);
@@ -80,79 +79,23 @@ const implementations = [
 for (const [name, hydrateShadowRoots] of implementations) {
   describe(name, () => {
     let cleanupFn = () => {};
-    const setupMutationObserver = ({ force }: { force: boolean }) => {
-      if (name === 'mutationObserver') {
-        let { cleanup } = transformShadowRoots(document, force);
-        cleanupFn = cleanup;
-      }
-    };
     const automaticHydration =
       name === 'mutationObserver' || hasNativeDeclarativeShadowRoots();
     beforeEach(() => {
-      setupMutationObserver({force: false});
+      if (name === 'mutationObserver') {
+        let { cleanup } = transformShadowRoots(document);
+        cleanupFn = cleanup;
+      }
     });
     afterEach(() => {
       elementLog.length = 0;
       cleanupFn();
     });
 
-    it('hydrates a template with old DSD syntax', async () => {
-      cleanupFn();
-      setupMutationObserver({ force: true });
-      const serialized = html`
-        <test-log label="A">
-          <template shadowroot="open">
-            <h1>Hello</h1>
-            <test-log label="B"></test-log>
-          </template>
-        </test-log>
-      `;
-
-      const root = renderFragment(serialized);
-      await waitATickForMutationObserverToRun();
-      if (!automaticHydration) {
-        expect(elementLog).eql(['A']);
-      }
-      hydrateShadowRoots(root, true);
-      expect(elementLog).eql(['A', 'B']);
-      expect(root.querySelector('test-log')?.shadowRoot).instanceOf(ShadowRoot);
-
-      assertSerializesAs(root, serialized, {
-        shadowroot: true,
-        shadowrootmode: false,
-      });
-    });
-
-    it('hydrates a template with streaming DSD syntax', async () => {
-      cleanupFn();
-      setupMutationObserver({ force: true });
-      const serialized = html`
-        <test-log label="A">
-          <template shadowrootmode="open">
-            <h1>Hello</h1>
-            <test-log label="B"></test-log>
-          </template>
-        </test-log>
-      `;
-
-      const root = renderFragment(serialized);
-      await waitATickForMutationObserverToRun();
-      if (!automaticHydration) {
-        expect(elementLog).eql(['A']);
-      }
-      hydrateShadowRoots(root, true);
-      expect(elementLog).eql(['A', 'B']);
-      expect(root.querySelector('test-log')?.shadowRoot).instanceOf(ShadowRoot);
-      assertSerializesAs(root, serialized, {
-        shadowroot: false,
-        shadowrootmode: true,
-      });
-    });
-
     it('hydrates a template with both syntaxes', async () => {
       const serialized = html`
         <test-log label="A">
-          <template shadowroot="open" shadowrootmode="open">
+          <template shadowrootmode="open">
             <h1>Hello</h1>
             <test-log label="B"></test-log>
           </template>
@@ -172,10 +115,10 @@ for (const [name, hydrateShadowRoots] of implementations) {
     it('hydrates nested templates in postorder', async () => {
       const serialized = html`
         <test-log label="A">
-          <template shadowroot="open" shadowrootmode="open">
+          <template shadowrootmode="open">
             <h1>Hello</h1>
             <test-log label="B">
-              <template shadowroot="open" shadowrootmode="open">
+              <template shadowrootmode="open">
                 <h1>World!</h1>
                 <test-log label="C"></test-log>
               </template>
@@ -200,10 +143,10 @@ for (const [name, hydrateShadowRoots] of implementations) {
       it('ignores multiple open shadow roots', async () => {
         const content = html`
           <test-log label="A">
-            <template shadowroot="open" shadowrootmode="open">
+            <template shadowrootmode="open">
               <test-log label="B"></test-log>
             </template>
-            <template shadowroot="open" shadowrootmode="open">
+            <template shadowrootmode="open">
               <test-log label="C"></test-log>
             </template>
           </test-log>
@@ -219,7 +162,7 @@ for (const [name, hydrateShadowRoots] of implementations) {
             root,
             html`
               <test-log label="A">
-                <template shadowroot="open" shadowrootmode="open">
+                <template shadowrootmode="open">
                   <test-log label="C"></test-log>
                 </template>
               </test-log>
@@ -235,7 +178,7 @@ for (const [name, hydrateShadowRoots] of implementations) {
             root,
             html`
               <test-log label="A">
-                <template shadowroot="open" shadowrootmode="open">
+                <template shadowrootmode="open">
                   <test-log label="B"></test-log>
                 </template>
               </test-log>
@@ -250,10 +193,10 @@ for (const [name, hydrateShadowRoots] of implementations) {
       it('ignores multiple closed shadow roots', async () => {
         const content = html`
           <test-log label="A">
-            <template shadowroot="closed" shadowrootmode="closed">
+            <template shadowrootmode="closed">
               <test-log label="B"></test-log>
             </template>
-            <template shadowroot="closed" shadowrootmode="closed">
+            <template shadowrootmode="closed">
               <test-log label="C"></test-log>
             </template>
           </test-log>
@@ -307,7 +250,7 @@ for (const [name, hydrateShadowRoots] of implementations) {
           <test-log label="B"></test-log>
           <template>
             <test-log label="C">
-              <template shadowroot="open" shadowrootmode="open">
+              <template shadowrootmode="open">
                 <div>Inner</div>
               </template>
             </test-log>
@@ -333,7 +276,7 @@ for (const [name, hydrateShadowRoots] of implementations) {
     it('can make closed shadow roots', async () => {
       const content = html`
         <test-log label="A">
-          <template shadowroot="closed" shadowrootmode="closed">
+          <template shadowrootmode="closed">
             <test-log label="B"></test-log>
           </template>
         </test-log>
@@ -392,10 +335,7 @@ function isDocumentFragment(e: Node): e is DocumentFragment {
  *
  * Not super robust, but good enough for testing.
  */
-function getSerializableTree<T extends Node>(
-  node: T,
-  syntax: { shadowroot: boolean; shadowrootmode: boolean }
-): T {
+function getSerializableTree<T extends Node>(node: T): T {
   const children = (node as Partial<Element>).childNodes;
   if (children === undefined || node.nodeType === Node.TEXT_NODE) {
     return node.cloneNode(true) as T;
@@ -415,36 +355,26 @@ function getSerializableTree<T extends Node>(
     }
     if (node.shadowRoot !== null) {
       const shadowTemplate = document.createElement('template');
-      if (syntax.shadowroot) {
-        shadowTemplate.setAttribute('shadowroot', 'open');
-      }
-      if (syntax.shadowrootmode) {
-        shadowTemplate.setAttribute('shadowrootmode', 'open');
-      }
-      copyTemplateContents(node.shadowRoot, shadowTemplate.content, syntax);
+      shadowTemplate.setAttribute('shadowrootmode', 'open');
+      copyTemplateContents(node.shadowRoot, shadowTemplate.content);
       clone.appendChild(shadowTemplate);
     }
   }
   for (let i = 0; i < children.length; i++) {
-    clone.appendChild(getSerializableTree(children[i], syntax));
+    clone.appendChild(getSerializableTree(children[i]));
   }
   if (isTemplate(node)) {
-    copyTemplateContents(
-      node.content,
-      (clone as HTMLTemplateElement).content,
-      syntax
-    );
+    copyTemplateContents(node.content, (clone as HTMLTemplateElement).content);
   }
   return clone as unknown as T;
 }
 
 function copyTemplateContents(
   from: DocumentFragment | ShadowRoot,
-  to: DocumentFragment,
-  syntax: { shadowroot: boolean; shadowrootmode: boolean }
+  to: DocumentFragment
 ) {
   const contentChildren = from.childNodes;
   for (let i = 0; i < contentChildren.length; i++) {
-    to.appendChild(getSerializableTree(contentChildren[i], syntax));
+    to.appendChild(getSerializableTree(contentChildren[i]));
   }
 }
