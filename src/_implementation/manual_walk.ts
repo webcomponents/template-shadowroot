@@ -16,8 +16,8 @@ import {hasNoParentElement, isElement, isTemplate} from './util.js';
  * elements are hydrated, their contents are already hydrated and in the
  * final correct structure of elements and shadow roots.
  */
-export const hydrateShadowRoots = (root: ParentNode) => {
-  if (hasNativeDeclarativeShadowRoots()) {
+export const hydrateShadowRoots = (root: ParentNode, force = false) => {
+  if (!force && hasNativeDeclarativeShadowRoots()) {
     return;  // nothing to do
   }
 
