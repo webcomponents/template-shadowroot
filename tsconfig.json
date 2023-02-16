@@ -6,7 +6,7 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "inlineSources": false,
+    "inlineSources": true,
     "outDir": "./",
     "rootDir": "./src",
     "strict": true,
