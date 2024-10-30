@@ -18,9 +18,14 @@ let hasNative: boolean|undefined;
 export function hasNativeDeclarativeShadowRoots(): boolean {
   if (hasNative === undefined) {
     const html = `<div><template shadowrootmode="open"></template></div>`;
-    const fragment = (new DOMParser() as DOMParser).parseFromString(html, 'text/html', {
-      includeShadowRoots: true
-    });
+    let fragment: Document;
+    if ('parseHTMLUnsafe' in Document) {
+      fragment = (Document as { parseHTMLUnsafe: (html: string) => Document }).parseHTMLUnsafe(html);
+    } else {
+      fragment = (new DOMParser() as DOMParser).parseFromString(html, 'text/html', {
+        includeShadowRoots: true
+      });
+    }
     hasNative = !!fragment.querySelector('div')?.shadowRoot;
   }
   return hasNative;
